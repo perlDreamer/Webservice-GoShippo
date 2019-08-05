@@ -18,7 +18,7 @@ WebService::GoShippo - A simple client to L<Shippo's REST API|https://goshippo.c
 
  use WebService::GoShippo;
 
- my $shippo = WebService::GoShippo->new(api_key => 'XXXXXXXXXXxxxxxxxxxxxx', version => '2018-08-28');
+ my $shippo = WebService::GoShippo->new(token => 'XXXXXXXXXXxxxxxxxxxxxx', version => '2018-08-28');
 
  my $addresses = $shippo->get('addresses');
 
@@ -36,7 +36,7 @@ Based on the value of the C<sandbox> flag, the module will either send requests 
 
 =item Adding authentication headers
 
-C<WebService::GoShippo> adds an authentication header of the type "Authorization: Bearer C<$tj-E<gt>api_key>" to each request.
+C<WebService::GoShippo> adds an authentication header of the type "Authorization: C<$tj-E<gt>token>" to each request.
 
 =item Adding api version number to request header.
 
@@ -270,7 +270,7 @@ sub _create_uri {
 sub _add_headers {
     my $self    = shift;
     my $request = shift;
-    $request->header( Authorization => 'Bearer '.$self->token() );
+    $request->header( Authorization => $self->token() );
     $request->header( 'Content-Type' => 'application/json' );
     if ($self->version) {
         $request->header( 'Shippo-API-Version' => $self->version );
