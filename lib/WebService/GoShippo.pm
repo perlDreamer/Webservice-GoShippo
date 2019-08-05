@@ -75,20 +75,20 @@ A hash of parameters.
 
 =over
 
-=item api_key
+=item token
 
-Your key for accessing Shippo's API.  Required.
+Your token for accessing Shippo's API.  Required.
 
 =item version
 
-The version of the API that you are using, like '2018-02-08', '2017-08-01', etc.  Optional.
+The version of the API that you are using, like '2018-02-08', '2017-08-01', etc.  Optional.  If this is left off, then the version setup in your account will be used.
 
 =cut
 
 =item debug_flag
 
 Just a spare, writable flag so that users of the object should log debug information, since GoShippo will likely ask for request/response pairs when
-you're having problems.
+you're having problems.  Hint hint.
 
     my $sales_tax = $taxjar->get('taxes', $order_information);
     if ($taxjar->debug_flag) {
