@@ -30,10 +30,6 @@ The module takes care of all of these things for you:
 
 =over 4
 
-=item Host selection
-
-Based on the value of the C<sandbox> flag, the module will either send requests to the production environment C<sandbox =E<gt> 0> or the sandbox environment C<sandbox =E<gt> 1>.
-
 =item Adding authentication headers
 
 C<WebService::GoShippo> adds an authentication header of the type "Authorization: C<$tj-E<gt>token>" to each request.
@@ -260,17 +256,13 @@ sub post {
 sub _create_uri {
     my $self = shift;
     my $path = shift;
-    my $host = $self->sandbox
-             ? 'https://api.sandbox.taxjar.com'
-             : 'https://api.taxjar.com'
-             ;
-    return URI->new(join '/', $host, $self->version, $path);
+    return URI->new(join '/', 'https://api.goshippo.com', $path);
 }
 
 sub _add_headers {
     my $self    = shift;
     my $request = shift;
-    $request->header( Authorization => $self->token() );
+    $request->header( Authorization => 'ShippoToken '.$self->token() );
     $request->header( 'Content-Type' => 'application/json' );
     if ($self->version) {
         $request->header( 'Shippo-API-Version' => $self->version );
@@ -281,7 +273,7 @@ sub _add_headers {
 sub _process_request {
     my $self = shift;
     my $request = shift;
-    $self->_add_auth_header($request);
+    $self->_add_headers($request);
     my $response = $self->agent->request($request);
     $response->request($request);
     $self->last_response($response);
