@@ -45,7 +45,7 @@ When making a request like:
 
     $tj->post('customers', { customer_id => '27', exemption_type => 'non_exempt', name => 'Andy Dufresne', });
 
-The data in POST request will be translated to JSON using <JSON::to_json>.
+The data in POST request will be translated to JSON using <JSON::to_json> and encoded to UTF8.
 
 =item Response data is deserialized from JSON and returned from each call.
 
@@ -214,7 +214,7 @@ A hash reference of parameters you wish to pass to Shippo.  This will be transla
 sub put {
     my ($self, $path, $params) = @_;
     my $uri = $self->_create_uri($path);
-    my %headers = ( Content => to_json($params), );
+    my %headers = ( Content => to_json($params, { utf8 => 1, }), );
     return $self->_process_request( POST $uri->as_string,  %headers );
 }
 
@@ -249,7 +249,7 @@ Shippo provides a free testing mode for prototyping your code but it is not feat
 sub post {
     my ($self, $path, $params) = @_;
     my $uri = $self->_create_uri($path);
-    my %headers = ( Content => to_json($params), );
+    my %headers = ( Content => to_json($params, { utf8 => 1, }), );
     return $self->_process_request( POST $uri->as_string, %headers );
 }
 
