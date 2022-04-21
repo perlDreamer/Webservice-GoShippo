@@ -165,7 +165,9 @@ sub get {
     my ($self, $path, $params) = @_;
     my $uri = $self->_create_uri($path);
     $uri->query_form($params);
-    return $self->_process_request( GET $uri->as_string );
+    my $base_request = GET $uri->as_string;
+    $self->_add_headers($base_request);
+    return $self->_process_request($base_request);
 }
 
 =head2 delete(path)
@@ -190,7 +192,9 @@ sub delete {
     my ($self, $path, $params) = @_;
     my $uri = $self->_create_uri($path);
     $uri->query_form($params);
-    return $self->_process_request( DELETE $uri->as_string );
+    my $base_request = DELETE $uri->as_string;
+    $self->_add_headers($base_request);
+    return $self->_process_request( $base_request );
 }
 
 =head2 put(path, json)
@@ -215,7 +219,9 @@ sub put {
     my ($self, $path, $params) = @_;
     my $uri = $self->_create_uri($path);
     my %headers = ( Content => to_json($params, { utf8 => 1, }), );
-    return $self->_process_request( POST $uri->as_string,  %headers );
+    my $base_request = PUT $uri->as_string, %headers;
+    $self->_add_headers($base_request);
+    return $self->_process_request( $base_request );
 }
 
 =head2 post(path, params, options)
@@ -250,7 +256,9 @@ sub post {
     my ($self, $path, $params) = @_;
     my $uri = $self->_create_uri($path);
     my %headers = ( Content => to_json($params, { utf8 => 1, }), );
-    return $self->_process_request( POST $uri->as_string, %headers );
+    my $base_request = POST $uri->as_string, %headers;
+    $self->_add_headers($base_request);
+    return $self->_process_request( $base_request );
 }
 
 sub _create_uri {
@@ -274,7 +282,6 @@ sub _add_headers {
 sub _process_request {
     my $self = shift;
     my $request = shift;
-    $self->_add_headers($request);
     my $response = $self->agent->request($request);
     $response->request($request);
     $self->last_response($response);
