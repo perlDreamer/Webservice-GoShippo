@@ -92,6 +92,11 @@ you're having problems.  Hint hint.
         $log->info($taxjar->last_response->decoded_content);
     }
 
+=item async
+
+If set to true, and you are making a POST request, then the system will check the return status of the request, and if it's either QUEUED or WAITING, then
+it will sleep for 0.25 seconds and then try again until a request succeeds, errors, or 60 seconds expire.
+
 =cut
 
 has token => (
@@ -105,6 +110,12 @@ has version => (
 );
 
 has debug_flag => (
+    is          => 'rw',
+    required    => 0,
+    default     => sub { 0 },
+);
+
+has async => (
     is          => 'rw',
     required    => 0,
     default     => sub { 0 },
