@@ -92,11 +92,6 @@ you're having problems.  Hint hint.
         $log->info($taxjar->last_response->decoded_content);
     }
 
-=item async
-
-If set to true, and you are making a POST request, then the system will check the return status of the request, and if it's either QUEUED or WAITING, then
-it will sleep for 0.25 seconds and then try again until a request succeeds, errors, or 60 seconds expire.
-
 =cut
 
 has token => (
@@ -110,12 +105,6 @@ has version => (
 );
 
 has debug_flag => (
-    is          => 'rw',
-    required    => 0,
-    default     => sub { 0 },
-);
-
-has async => (
     is          => 'rw',
     required    => 0,
     default     => sub { 0 },
@@ -179,6 +168,43 @@ sub get {
     my $base_request = GET $uri->as_string;
     $self->_add_headers($base_request);
     return $self->_process_request($base_request);
+}
+
+=head2 get_all(path, params)
+
+Performs as many C<GET> requests as needed to fetch all pages of data.
+
+=over
+
+=item path
+
+The path to the REST interface you wish to call. 
+
+=item params
+
+A hash reference of parameters you wish to pass to the web service.  These parameters will be added as query parameters to the URL for you.  Returns the original
+response hashref, with all the results from every response concatenated in the C<results> key.
+
+=back
+
+=cut
+
+sub get_all {
+    my ($self, $path, $params) = @_;
+    my $uri = $self->_create_uri($path);
+    $uri->query_form($params);
+    my $base_request = GET $uri->as_string;
+    $self->_add_headers($base_request);
+    my $base_response = $self->_process_request($base_request);
+    my $get_more = $base_response->{next};
+    while ($get_more) {
+        my $request = GET $get_more;
+        $self->_add_headers($request);
+        my $response = $self->_process_request($request);
+        push @{ $base_response->{results} }, @{ $response->{results} };
+        $get_more = $base_response->{next};
+    }
+    return $base_response;
 }
 
 =head2 delete(path)
@@ -269,7 +295,9 @@ sub post {
     my %headers = ( Content => to_json($params, { utf8 => 1, }), );
     my $base_request = POST $uri->as_string, %headers;
     $self->_add_headers($base_request);
-    return $self->_process_request( $base_request );
+    my $sleep_duration = 0.50;
+    my $response = $self->_process_request( $base_request );
+    return $response;
 }
 
 sub _create_uri {
