@@ -197,12 +197,12 @@ sub get_all {
     $self->_add_headers($base_request);
     my $base_response = $self->_process_request($base_request);
     my $get_more = $base_response->{next};
-    while ($get_more) {
+    while (defined($get_more) && $get_more) {
         my $request = GET $get_more;
         $self->_add_headers($request);
         my $response = $self->_process_request($request);
         push @{ $base_response->{results} }, @{ $response->{results} };
-        $get_more = $base_response->{next};
+        $get_more = $response->{next};
     }
     return $base_response;
 }
