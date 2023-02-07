@@ -5,6 +5,7 @@ package WebService::GoShippo;
 use HTTP::Thin;
 use HTTP::Request::Common qw/GET DELETE PUT POST/;
 use HTTP::CookieJar;
+use Time::HiRes qw/sleep gettimeofday/;
 use JSON;
 use URI;
 use Ouch;
@@ -151,7 +152,7 @@ Performs a C<GET> request, which is used for reading data from the service.
 
 =item path
 
-The path to the REST interface you wish to call. 
+The path to the REST interface you wish to call.
 
 =item params
 
@@ -178,7 +179,7 @@ Performs as many C<GET> requests as needed to fetch all pages of data.
 
 =item path
 
-The path to the REST interface you wish to call. 
+The path to the REST interface you wish to call.
 
 =item params
 
@@ -203,6 +204,51 @@ sub get_all {
         my $response = $self->_process_request($request);
         push @{ $base_response->{results} }, @{ $response->{results} };
         $get_more = $response->{next};
+    }
+    return $base_response;
+}
+
+=head2 poll(path, params, max_delay)
+
+Poll a REST GET endpoint, with exponential retry.  The first wait is 1 second, then 2 seconds, then 4 until a maximum wait time is reached or passed.
+
+=over
+
+=item path
+
+The path to the REST interface you wish to call.
+
+=item params
+
+A hash reference of parameters you wish to pass to the web service.  These parameters will be added as query parameters to the URL for you.  Returns the original
+response hashref, with all the results from every response concatenated in the C<results> key.
+
+=item max_wait
+
+The longest you want to wait for polling the endpoint.  Defaults to 70 seconds.
+
+=back
+
+=cut
+
+sub poll {
+    my ($self, $path, $params, $max_wait) = @_;
+    $max_wait //= 70;
+    my $uri = $self->_create_uri($path);
+    $uri->query_form($params);
+    my $base_request = GET $uri->as_string;
+    $self->_add_headers($base_request);
+    my $start_time = gettimeofday();
+    my $wait_time = 1;
+    my $base_response = $self->_process_request($base_request);
+    while ($base_response->{status} eq 'QUEUED' || $base_response->{status} eq 'WAITING') {
+        sleep $wait_time;
+        my $elapsed_time = gettimeofday() - $start_time;
+        if ($elapsed_time > $max_wait) {
+            ouch 488, "Maximum wait time exceeded.";
+        }
+        $base_response = $self->_process_request($base_request);
+        $wait_time *= 2;
     }
     return $base_response;
 }
